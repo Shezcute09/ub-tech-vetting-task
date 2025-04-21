@@ -1,0 +1,87 @@
+/* style.css */
+body,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p,
+ul,
+ol,
+li,
+figure,
+figcaption,
+blockquote,
+dl,
+dd {
+  padding: 0;
+  margin: 0;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: sans-serif;
+  background-color: #f4f4f4;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  margin: 0;
+}
+
+.container {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  padding: 20px; /* Add some padding around the card on smaller screens */
+}
+
+.card {
+  background-color: #ffffff;
+
+  border-radius: 8px; /* Add border-radius here for consistency */
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+}
+
+.profile-photo {
+  border-radius: 50%;
+  object-fit: cover; /* Ensure the image fills the circle without distortion */
+}
+
+.card-title {
+  margin-top: 50px; /* Adjust spacing */
+  font-size: 1.5rem; /* Use rem for better scalability */
+  text-align: center;
+}
+
+.image-slider {
+  margin-top: 20px;
+  width: 100%;
+  height: 300px; /* Adjust initial height */
+  overflow: hidden;
+  position: relative;
+}
+
+.image-slider img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  position: absolute;
+  top: 0;
+  left: 0;
+  opacity: 0;
+  transition: opacity 0.5s ease-in-out;
+}
+
+.image-slider img.active {
+  opacity: 1;
+}
+
+/* Add more CSS for the sliding animation, navigation arrows/dots later */
