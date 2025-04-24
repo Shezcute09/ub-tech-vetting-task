@@ -29,12 +29,23 @@
             <h1 class="card-title font-semibold text-[#181D27] text-xl sm:text-2xl md:text-3xl lg:text-4xl">My Female
                 Models
             </h1>
-            <div class="image-slider">
-                <img src="" alt="Image 1">
-                <img src="" alt="Image 2">
-                <img src="" alt="Image 3">
+            <div class="image-slider relative">
+
+                <div id="slider-track" class="flex h-full">
+                    <img src="" class="" alt="Image 1">
+                    <img src="" class="" alt="Image 2">
+                    <img src="" class="" alt="Image 3">
+                </div>
+
+                <button id="prev-button"
+                    class="absolute top-1/2 left-2 transform -translate-y-1/2 bg-blue-600 bg-opacity-50 text-white rounded-full z-10">
+                    &lt; </button>
+                <button id="next-button"
+                    class="absolute top-1/2 right-2 transform -translate-y-1/2 bg-blue-600 bg-opacity-50 text-white rounded-full z-10">
+                    &gt; </button>
             </div>
         </div>
+    </div>
     </div>
 
     <script src="script.js">

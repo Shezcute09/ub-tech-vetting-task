@@ -1,6 +1,6 @@
 // script.js
-
-const apiKey = "XtbC1H3JD0jUREu9cYb7tQuPAd4pc2V4r-Pt6SRUMA8"; // Replace with your actual Unsplash API key
+let globalData = null; // Add this line
+const apiKey = "XtbC1H3JD0jUREu9cYb7tQuPAd4pc2V4r-Pt6SRUMA8";
 const baseUrl = "https://api.unsplash.com";
 const searchEndpoint = "/search/photos";
 const searchQueryFemale = "female models";
@@ -8,10 +8,44 @@ const searchQueryMale = "male models";
 const perPage = 3;
 
 const cardTitleElement = document.querySelector(".card-title");
-const imageSliderContainer = document.querySelector(".image-slider"); // The container for images
+const imageSliderContainer = document.querySelector(".image-slider");
 const imageElements = imageSliderContainer
   ? imageSliderContainer.querySelectorAll("img")
   : []; // Get all <img> inside .image-slider
+const sliderTrackElement = document.querySelector("#slider-track");
+const prevButtonElement = document.querySelector("#prev-button");
+const nextButtonElement = document.querySelector("#next-button");
+
+// State variables for the slider
+let currentIndex = 0; // Keeps track of the index (0, 1, 2...) of the image currently shown. Starts at 0 (the first image). Use 'let' because this will change.
+const totalImages = imageElements.length; // Stores the total number of images we found earlier. Use 'const' assuming this doesn't change after page load.
+
+function updateSliderPosition() {
+  // Calculating how far to move the track (negative % because I am sliding left)
+  const offset = -currentIndex * (100 / totalImages);
+  sliderTrackElement.style.transform = `translateX(${offset}%)`;
+
+  // Update the title with the current image's data;
+  if (globalData && globalData.results) {
+    const currentImageData = globalData.results[currentIndex];
+    const titleText =
+      currentImageData.description ||
+      currentImageData.alt_description ||
+      "My Models";
+    cardTitleElement.textContent = titleText;
+  }
+}
+updateSliderPosition();
+
+nextButtonElement.addEventListener("click", () => {
+  currentIndex = (currentIndex + 1) % totalImages;
+  updateSliderPosition();
+});
+
+prevButtonElement.addEventListener("click", () => {
+  currentIndex = (currentIndex - 1 + totalImages) % totalImages;
+  updateSliderPosition();
+});
 
 function fetchImages(query) {
   const apiUrl = `${baseUrl}${searchEndpoint}?query=${query}&per_page=${perPage}&client_id=${apiKey}`;
@@ -20,6 +54,7 @@ function fetchImages(query) {
     .then((response) => {
       if (response.ok) {
         return response.json().then((data) => {
+          globalData = data; // Store the data in the global variable
           console.log("Data from Unsplash API:", data);
           // We'll process the data here to get image URLs
 
@@ -41,7 +76,7 @@ function fetchImages(query) {
             const firstImage = data.results[0];
             const titleText = firstImage.alt_description || query; // Use the alt text of the first image or fallback to the query
 
-            // Actually update the HTML element's text
+            //  updating the HTML element's text
             if (cardTitleElement) {
               // Check if the element exists before using it
               cardTitleElement.textContent = titleText; // <<< ADD THIS LINE
@@ -52,10 +87,10 @@ function fetchImages(query) {
                 const imageUrl = imageData.urls.regular;
                 const altText = imageData.alt_description || titleText || query; // Use the alt text of the image or fallback to the title text or query
 
-                // Access the specific <img> element from our 'imageElements' list using its index.
-                // Set its 'src' attribute to the URL we just got. This makes the browser load the image.
+                // Accessing the specific <img> element from our 'imageElements' list using its index.
+                //I set its 'src' attribute to the URL we just got. This makes the browser load the image.
                 imageElements[index].src = imageUrl;
-                // Set its 'alt' attribute to the alt text we determined.
+                // I Set its 'alt' attribute to the alt text we determined.
                 imageElements[index].alt = altText;
 
                 // --- TEMPORARY STYLING LOGIC ---
