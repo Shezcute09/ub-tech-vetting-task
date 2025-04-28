@@ -79,7 +79,6 @@ function fetchImages(query) {
           globalData = data;
           console.log("Data from Unsplash API:", data);
 
-          // --- Start of changes ---
           if (data?.results?.length > 0) {
             data.results.forEach((imageData, index) => {
               if (index < imageElements.length) {
@@ -96,12 +95,9 @@ function fetchImages(query) {
               }
             });
 
-            // Reset to first image and update title
-            currentIndex = 0; // Add this line
-            updateSliderPosition(); // Uncommented this line
-          }
-          // --- End of changes ---
-          else {
+            currentIndex = 0;
+            updateSliderPosition();
+          } else {
             cardTitleElement.textContent = "No images found for this query.";
             imageElements.forEach((img) => {
               img.src = "";
@@ -139,8 +135,7 @@ function fetchImages(query) {
     });
 }
 
-// Remove the initial updateSliderPosition() call from here
 fetchImages(searchQueryFemale);
 
-// You can later call it again for male models or other queries
+// I can later call it again for male models or other queries
 // fetchImages(searchQueryMale);

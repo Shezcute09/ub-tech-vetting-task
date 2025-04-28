@@ -25,6 +25,30 @@ dd {
   box-sizing: border-box;
 }
 
+/* Network Status Styles */
+.offline-message {
+  display: none;
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #ff4444;
+  color: white;
+  padding: 15px 25px;
+  border-radius: 5px;
+  z-index: 1000;
+}
+
+.offline .offline-message {
+  display: block;
+}
+
+.offline .image-slider,
+.offline .card-title {
+  display: none !important;
+}
+
+/*other styles*/
 body {
   font-family: sans-serif;
   background-color: #f4f4f4;
@@ -44,32 +68,39 @@ body {
 
 .card {
   background-color: #ffffff;
-
-  border-radius: 8px; /* Add border-radius here for consistency */
+  border-radius: 8px;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
   padding: 20px;
 }
 
 .profile-photo {
   border-radius: 50%;
-  object-fit: cover; /* Ensure the image fills the circle without distortion */
+  object-fit: cover;
 }
 
 .card-header {
-  margin-top: 50px; /* Adjust spacing */
-  font-size: 1.5rem; /* Use rem for better scalability */
+  margin-top: 50px;
+  font-size: 1.5rem;
   text-align: center;
   text-transform: uppercase;
   display: flex;
   justify-content: center;
   align-items: center;
-  margin-top: 50px; /* Space between header and content */
+  margin-top: 50px;
 }
 .card-title {
-  margin-top: 20px; /* Adjust spacing */
-  font-size: 1rem; /* Use rem for better scalability */
+  margin-top: 20px;
+  font-size: 1rem;
   text-align: center;
   text-transform: uppercase;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding: 0 15px;
+  word-break: break-word;
+  hyphens: auto;
 }
 
 .image-slider {
@@ -85,10 +116,9 @@ body {
   top: 0;
   left: 0;
   width: 300%;
-  height: 100%; /* Fill parent's padding-top area */
+  height: 100%;
   display: flex;
   transition: transform 0.5s ease-in-out;
-  /* transform: translateX(0%); */ /* Initial position - JS will handle this */
 }
 
 #slider-track img {
@@ -110,44 +140,15 @@ body {
 
 #prev-button,
 #next-button {
-  padding: 8px; /* Smaller buttons on mobile */
+  padding: 8px;
   font-size: 14px;
 }
 
-/* Hide ALL image-related elements when offline */
-.offline .image-slider,
-.offline .card-title {
-  display: none !important;
-}
-
-/* Show offline message only when offline */
-.offline-message {
-  display: none;
-  text-align: center;
-  color: #dc3545;
-  padding: 20px;
-}
-.offline .offline-message {
-  display: block;
-}
-
-/* Add to your style.css */
 .offline .image-slider img {
   display: none !important;
 }
 
-.offline-message {
-  display: none;
-  text-align: center;
-  color: #dc3545;
-  padding: 20px;
-}
-
 body.offline .offline-message {
-  display: block;
-}
-
-.offline .offline-message {
   display: block;
 }
 
@@ -158,7 +159,7 @@ body.offline .offline-message {
 @media (min-width: 768px) {
   #prev-button,
   #next-button {
-    padding: 12px; /* Larger buttons on desktop */
+    padding: 12px;
     font-size: 18px;
   }
 }
