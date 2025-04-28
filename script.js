@@ -7,6 +7,7 @@ const SEARCH_QUERIES = {
   male: "male models",
 };
 const PER_PAGE = 3;
+const AUTO_SLIDE_INTERVAL = 5000; // 5 seconds
 
 // ========== DOM Elements ==========
 const cardTitle = document.querySelector(".card-title");
@@ -20,27 +21,42 @@ const [prevBtn, nextBtn] = [
 // ========== Global State ==========
 let currentImageIndex = 0;
 let imageData = null;
-let currentQuery = SEARCH_QUERIES.female; // Default to female
+let currentQuery = SEARCH_QUERIES.female;
+let autoSlideTimer = null;
 
 // ========== Network Detection ==========
 function handleNetworkStatus() {
   const isOnline = navigator.onLine;
   document.body.classList.toggle("offline", !isOnline);
 
-  if (isOnline && !imageData) {
-    fetchImages(currentQuery);
+  if (isOnline) {
+    if (!imageData) fetchImages(currentQuery);
+    startAutoSlide(); // Resume auto-slide when online
+  } else {
+    stopAutoSlide(); // Pause auto-slide when offline
   }
 }
 
-window.addEventListener("online", handleNetworkStatus);
-window.addEventListener("offline", handleNetworkStatus);
+// ========== Auto-Slide Functions ==========
+function startAutoSlide() {
+  if (!autoSlideTimer) {
+    autoSlideTimer = setInterval(() => {
+      currentImageIndex = (currentImageIndex + 1) % images.length;
+      updateSlider();
+    }, AUTO_SLIDE_INTERVAL);
+  }
+}
+
+function stopAutoSlide() {
+  clearInterval(autoSlideTimer);
+  autoSlideTimer = null;
+}
 
 // ========== Slider Controls ==========
 function updateSlider() {
   const slideWidthPercentage = 100 / images.length;
   const offset = -currentImageIndex * slideWidthPercentage;
-  // Apply the translation
-  sliderTrack.style.transform = `translateX(${offset}%)`; // Add % sign here
+  sliderTrack.style.transform = `translateX(${offset}%)`;
 
   if (imageData?.results?.[currentImageIndex]) {
     const current = imageData.results[currentImageIndex];
@@ -52,15 +68,28 @@ function updateSlider() {
   }
 }
 
+// ========== Event Listeners ==========
 nextBtn.addEventListener("click", () => {
+  stopAutoSlide();
   currentImageIndex = (currentImageIndex + 1) % images.length;
   updateSlider();
+  startAutoSlide();
 });
 
 prevBtn.addEventListener("click", () => {
+  stopAutoSlide();
   currentImageIndex = (currentImageIndex - 1 + images.length) % images.length;
   updateSlider();
+  startAutoSlide();
 });
+
+// Pause on hover
+document
+  .querySelector(".image-slider")
+  .addEventListener("mouseenter", stopAutoSlide);
+document
+  .querySelector(".image-slider")
+  .addEventListener("mouseleave", startAutoSlide);
 
 // ========== Image Loading ==========
 async function fetchImages(queryType) {
@@ -72,7 +101,7 @@ async function fetchImages(queryType) {
     );
 
     imageData = await response.json();
-    currentQuery = queryType; // Store active query
+    currentQuery = queryType;
 
     images.forEach((img, index) => {
       if (imageData.results[index]) {
@@ -83,6 +112,7 @@ async function fetchImages(queryType) {
 
     currentImageIndex = 0;
     updateSlider();
+    startAutoSlide(); // Start auto-slide after successful load
   } catch (error) {
     handleLoadingError();
   }
@@ -90,6 +120,7 @@ async function fetchImages(queryType) {
 
 // ========== Error Handling ==========
 function handleLoadingError() {
+  stopAutoSlide(); // Stop auto-slide on error
   images.forEach((img) => (img.src = ""));
   cardTitle.textContent = "⚠️ Failed to load images";
 
@@ -99,16 +130,14 @@ function handleLoadingError() {
     retryBtn.textContent = "Try Again";
     retryBtn.onclick = () => {
       retryBtn.remove();
-      fetchImages(currentQuery); // Retry with last used query
+      fetchImages(currentQuery);
     };
     document.querySelector(".card").appendChild(retryBtn);
   }
 }
 
 // ========== Initialization ==========
-handleNetworkStatus();
-fetchImages(SEARCH_QUERIES.female); // Initial load
-
-// ========== Public API ==========
-// To switch to male models later:
-// fetchImages(SEARCH_QUERIES.male);
+window.addEventListener("online", handleNetworkStatus);
+window.addEventListener("offline", handleNetworkStatus);
+handleNetworkStatus(); // Initial check
+fetchImages(SEARCH_QUERIES.female);
