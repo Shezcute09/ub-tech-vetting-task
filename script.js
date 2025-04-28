@@ -1,141 +1,114 @@
 // script.js
-let globalData = null;
-const apiKey = "XtbC1H3JD0jUREu9cYb7tQuPAd4pc2V4r-Pt6SRUMA8";
-const baseUrl = "https://api.unsplash.com";
-const searchEndpoint = "/search/photos";
-const searchQueryFemale = "female models";
-const searchQueryMale = "male models";
-const perPage = 3;
+// ========== Configuration ==========
+const API_KEY = "XtbC1H3JD0jUREu9cYb7tQuPAd4pc2V4r-Pt6SRUMA8";
+const BASE_URL = "https://api.unsplash.com";
+const SEARCH_QUERIES = {
+  female: "female models",
+  male: "male models",
+};
+const PER_PAGE = 3;
 
-const cardTitleElement = document.querySelector(".card-title");
-const imageSliderContainer = document.querySelector(".image-slider");
-const imageElements = imageSliderContainer
-  ? imageSliderContainer.querySelectorAll("img")
-  : [];
-const sliderTrackElement = document.querySelector("#slider-track");
-const prevButtonElement = document.querySelector("#prev-button");
-const nextButtonElement = document.querySelector("#next-button");
+// ========== DOM Elements ==========
+const cardTitle = document.querySelector(".card-title");
+const sliderTrack = document.querySelector("#slider-track");
+const images = document.querySelectorAll(".image-slider img");
+const [prevBtn, nextBtn] = [
+  document.querySelector("#prev-button"),
+  document.querySelector("#next-button"),
+];
 
-// State variables
-let currentIndex = 0;
-const totalImages = imageElements.length;
+// ========== Global State ==========
+let currentImageIndex = 0;
+let imageData = null;
+let currentQuery = SEARCH_QUERIES.female; // Default to female
 
-function updateNetworkStatus() {
+// ========== Network Detection ==========
+function handleNetworkStatus() {
   const isOnline = navigator.onLine;
   document.body.classList.toggle("offline", !isOnline);
 
-  if (isOnline) {
-    globalData = null;
-    currentIndex = 0;
-    fetchImages(searchQueryFemale);
+  if (isOnline && !imageData) {
+    fetchImages(currentQuery);
   }
 }
 
-// Initial check
-updateNetworkStatus();
+window.addEventListener("online", handleNetworkStatus);
+window.addEventListener("offline", handleNetworkStatus);
 
-// Event listeners
-window.addEventListener("online", updateNetworkStatus);
-window.addEventListener("offline", updateNetworkStatus);
+// ========== Slider Controls ==========
+function updateSlider() {
+  const slideWidthPercentage = 100 / images.length;
+  const offset = -currentImageIndex * slideWidthPercentage;
+  // Apply the translation
+  sliderTrack.style.transform = `translateX(${offset}%)`; // Add % sign here
 
-function updateSliderPosition() {
-  const offset = -currentIndex * (100 / totalImages);
-  sliderTrackElement.style.transform = `translateX(${offset}%)`;
-
-  if (globalData?.results?.[currentIndex]) {
-    const currentImageData = globalData.results[currentIndex];
-    const titleText =
-      currentImageData.description ||
-      currentImageData.alt_description ||
-      "My Models";
-    cardTitleElement.textContent = titleText.toUpperCase();
-  } else {
-    cardTitleElement.textContent = "MY MODELS"; // Fallback title
+  if (imageData?.results?.[currentImageIndex]) {
+    const current = imageData.results[currentImageIndex];
+    cardTitle.textContent = (
+      current.description ||
+      current.alt_description ||
+      "Fashion Model"
+    ).toUpperCase();
   }
 }
 
-nextButtonElement.addEventListener("click", () => {
-  currentIndex = (currentIndex + 1) % totalImages;
-  updateSliderPosition();
+nextBtn.addEventListener("click", () => {
+  currentImageIndex = (currentImageIndex + 1) % images.length;
+  updateSlider();
 });
 
-prevButtonElement.addEventListener("click", () => {
-  currentIndex = (currentIndex - 1 + totalImages) % totalImages;
-  updateSliderPosition();
+prevBtn.addEventListener("click", () => {
+  currentImageIndex = (currentImageIndex - 1 + images.length) % images.length;
+  updateSlider();
 });
 
-function fetchImages(query) {
-  if (!navigator.onLine) {
-    console.log("Skipping fetch - offline");
-    return;
-  }
+// ========== Image Loading ==========
+async function fetchImages(queryType) {
+  if (!navigator.onLine) return;
 
-  const apiUrl = `${baseUrl}${searchEndpoint}?query=${query}&per_page=${perPage}&client_id=${apiKey}`;
+  try {
+    const response = await fetch(
+      `${BASE_URL}/search/photos?query=${queryType}&per_page=${PER_PAGE}&client_id=${API_KEY}`
+    );
 
-  fetch(apiUrl)
-    .then((response) => {
-      if (response.ok) {
-        return response.json().then((data) => {
-          globalData = data;
-          console.log("Data from Unsplash API:", data);
+    imageData = await response.json();
+    currentQuery = queryType; // Store active query
 
-          if (data?.results?.length > 0) {
-            data.results.forEach((imageData, index) => {
-              if (index < imageElements.length) {
-                const imageUrl = imageData.urls.regular;
-                const altText = imageData.alt_description || query;
-                imageElements[index].src = imageUrl;
-                imageElements[index].alt = altText;
-
-                if (index === 0) {
-                  imageElements[index].classList.add("active");
-                } else {
-                  imageElements[index].classList.remove("active");
-                }
-              }
-            });
-
-            currentIndex = 0;
-            updateSliderPosition();
-          } else {
-            cardTitleElement.textContent = "No images found for this query.";
-            imageElements.forEach((img) => {
-              img.src = "";
-              img.alt = "No image found";
-              img.classList.remove("active");
-            });
-          }
-        });
-      } else {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-    })
-    .catch((error) => {
-      console.error("Error fetching images:", error);
-      imageElements.forEach((img) => {
-        img.alt = "Image failed to load";
-        img.classList.remove("active");
-      });
-
-      if (cardTitleElement) {
-        cardTitleElement.textContent =
-          "⚠️ Failed to load images. Check your connection!";
-      }
-
-      if (!document.querySelector(".retry-button")) {
-        const retryButton = document.createElement("button");
-        retryButton.textContent = "Retry";
-        retryButton.classList.add("retry-button");
-        retryButton.onclick = () => {
-          retryButton.remove();
-          fetchImages(searchQueryFemale);
-        };
-        document.querySelector(".card").appendChild(retryButton);
+    images.forEach((img, index) => {
+      if (imageData.results[index]) {
+        img.src = imageData.results[index].urls.regular;
+        img.alt = imageData.results[index].alt_description || queryType;
       }
     });
+
+    currentImageIndex = 0;
+    updateSlider();
+  } catch (error) {
+    handleLoadingError();
+  }
 }
 
-fetchImages(searchQueryFemale);
+// ========== Error Handling ==========
+function handleLoadingError() {
+  images.forEach((img) => (img.src = ""));
+  cardTitle.textContent = "⚠️ Failed to load images";
 
-// I can later call it again for male models or other queries
-// fetchImages(searchQueryMale);
+  if (!document.querySelector(".retry-button")) {
+    const retryBtn = document.createElement("button");
+    retryBtn.className = "retry-button";
+    retryBtn.textContent = "Try Again";
+    retryBtn.onclick = () => {
+      retryBtn.remove();
+      fetchImages(currentQuery); // Retry with last used query
+    };
+    document.querySelector(".card").appendChild(retryBtn);
+  }
+}
+
+// ========== Initialization ==========
+handleNetworkStatus();
+fetchImages(SEARCH_QUERIES.female); // Initial load
+
+// ========== Public API ==========
+// To switch to male models later:
+// fetchImages(SEARCH_QUERIES.male);
