@@ -145,6 +145,36 @@ body {
   font-size: 14px;
 }
 
+/* Pagination Dots Styles */
+.pagination-dots {
+  position: absolute;
+  bottom: 15px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 10px;
+  z-index: 10;
+}
+
+.dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.dot.active {
+  background: #0601b4;
+  transform: scale(1.2);
+}
+
+/* Hide dots when offline */
+.offline .pagination-dots {
+  display: none !important;
+}
+
 .offline .image-slider img {
   display: none !important;
 }

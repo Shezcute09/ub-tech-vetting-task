@@ -7,7 +7,7 @@ const SEARCH_QUERIES = {
   male: "male models",
 };
 const PER_PAGE = 3;
-const AUTO_SLIDE_INTERVAL = 5000; // 5 seconds
+const AUTO_SLIDE_INTERVAL = 5000;
 
 // ========== DOM Elements ==========
 const cardTitle = document.querySelector(".card-title");
@@ -23,6 +23,40 @@ let currentImageIndex = 0;
 let imageData = null;
 let currentQuery = SEARCH_QUERIES.female;
 let autoSlideTimer = null;
+let dots = [];
+
+// ========== Pagination Functions ==========
+function createPagination() {
+  // Remove existing pagination if any
+  const existingPagination = document.querySelector(".pagination-dots");
+  if (existingPagination) existingPagination.remove();
+
+  const paginationContainer = document.createElement("div");
+  paginationContainer.className = "pagination-dots";
+
+  dots = [];
+
+  images.forEach((_, index) => {
+    const dot = document.createElement("div");
+    dot.className = `dot ${index === currentImageIndex ? "active" : ""}`;
+    dot.addEventListener("click", () => {
+      stopAutoSlide();
+      currentImageIndex = index;
+      updateSlider();
+      startAutoSlide();
+    });
+    dots.push(dot);
+    paginationContainer.appendChild(dot);
+  });
+
+  document.querySelector(".image-slider").appendChild(paginationContainer);
+}
+
+function updatePagination() {
+  dots.forEach((dot, index) => {
+    dot.classList.toggle("active", index === currentImageIndex);
+  });
+}
 
 // ========== Network Detection ==========
 function handleNetworkStatus() {
@@ -31,9 +65,9 @@ function handleNetworkStatus() {
 
   if (isOnline) {
     if (!imageData) fetchImages(currentQuery);
-    startAutoSlide(); // Resume auto-slide when online
+    startAutoSlide();
   } else {
-    stopAutoSlide(); // Pause auto-slide when offline
+    stopAutoSlide();
   }
 }
 
@@ -66,6 +100,8 @@ function updateSlider() {
       "Fashion Model"
     ).toUpperCase();
   }
+
+  updatePagination();
 }
 
 // ========== Event Listeners ==========
@@ -83,7 +119,6 @@ prevBtn.addEventListener("click", () => {
   startAutoSlide();
 });
 
-// Pause on hover
 document
   .querySelector(".image-slider")
   .addEventListener("mouseenter", stopAutoSlide);
@@ -111,8 +146,9 @@ async function fetchImages(queryType) {
     });
 
     currentImageIndex = 0;
+    createPagination();
     updateSlider();
-    startAutoSlide(); // Start auto-slide after successful load
+    startAutoSlide();
   } catch (error) {
     handleLoadingError();
   }
@@ -120,9 +156,12 @@ async function fetchImages(queryType) {
 
 // ========== Error Handling ==========
 function handleLoadingError() {
-  stopAutoSlide(); // Stop auto-slide on error
+  stopAutoSlide();
   images.forEach((img) => (img.src = ""));
   cardTitle.textContent = "⚠️ Failed to load images";
+
+  const dotsContainer = document.querySelector(".pagination-dots");
+  if (dotsContainer) dotsContainer.remove();
 
   if (!document.querySelector(".retry-button")) {
     const retryBtn = document.createElement("button");
@@ -139,5 +178,5 @@ function handleLoadingError() {
 // ========== Initialization ==========
 window.addEventListener("online", handleNetworkStatus);
 window.addEventListener("offline", handleNetworkStatus);
-handleNetworkStatus(); // Initial check
+handleNetworkStatus();
 fetchImages(SEARCH_QUERIES.female);
