@@ -55,10 +55,21 @@ body {
   object-fit: cover; /* Ensure the image fills the circle without distortion */
 }
 
-.card-title {
+.card-header {
   margin-top: 50px; /* Adjust spacing */
   font-size: 1.5rem; /* Use rem for better scalability */
   text-align: center;
+  text-transform: uppercase;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 50px; /* Space between header and content */
+}
+.card-title {
+  margin-top: 20px; /* Adjust spacing */
+  font-size: 1rem; /* Use rem for better scalability */
+  text-align: center;
+  text-transform: uppercase;
 }
 
 .image-slider {
@@ -87,10 +98,61 @@ body {
   flex-shrink: 0;
 }
 
+.retry-button {
+  background: #0601b4;
+  color: white;
+  padding: 10px 20px;
+  border-radius: 5px;
+  margin: 20px auto;
+  display: block;
+  cursor: pointer;
+}
+
 #prev-button,
 #next-button {
   padding: 8px; /* Smaller buttons on mobile */
   font-size: 14px;
+}
+
+/* Hide ALL image-related elements when offline */
+.offline .image-slider,
+.offline .card-title {
+  display: none !important;
+}
+
+/* Show offline message only when offline */
+.offline-message {
+  display: none;
+  text-align: center;
+  color: #dc3545;
+  padding: 20px;
+}
+.offline .offline-message {
+  display: block;
+}
+
+/* Add to your style.css */
+.offline .image-slider img {
+  display: none !important;
+}
+
+.offline-message {
+  display: none;
+  text-align: center;
+  color: #dc3545;
+  padding: 20px;
+}
+
+body.offline .offline-message {
+  display: block;
+}
+
+.offline .offline-message {
+  display: block;
+}
+
+.offline .retry-button {
+  display: none;
 }
 
 @media (min-width: 768px) {
