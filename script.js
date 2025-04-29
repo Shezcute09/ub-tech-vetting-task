@@ -1,6 +1,6 @@
 // script.js
 // ========== Configuration ==========
-const API_KEY = "XtbC1H3JD0jUREu9cYb7tQuPAd4pc2V4r-Pt6SRUMA8";
+
 const BASE_URL = "https://api.unsplash.com";
 const SEARCH_QUERIES = {
   female: "female models",
@@ -88,6 +88,9 @@ function stopAutoSlide() {
 
 // ========== Slider Controls ==========
 function updateSlider() {
+  // Ensure images array has elements before calculating width/offset
+  if (images.length === 0) return;
+
   const slideWidthPercentage = 100 / images.length;
   const offset = -currentImageIndex * slideWidthPercentage;
   sliderTrack.style.transform = `translateX(${offset}%)`;
@@ -113,6 +116,10 @@ nextBtn.addEventListener("click", () => {
 });
 
 prevBtn.addEventListener("click", () => {
+  // Don't slide if no images
+  if (images.length === 0) return;
+  stopAutoSlide();
+
   stopAutoSlide();
   currentImageIndex = (currentImageIndex - 1 + images.length) % images.length;
   updateSlider();
@@ -130,13 +137,37 @@ document
 async function fetchImages(queryType) {
   if (!navigator.onLine) return;
 
+  // Construct the URL for your proxy function, passing parameters
+  const proxyUrl = `/.netlify/functions/unsplash-proxy?query=${encodeURIComponent(
+    queryType
+  )}&per_page=${PER_PAGE}`;
+  // Note: Using encodeURIComponent for the query is good practice
+
   try {
-    const response = await fetch(
-      `${BASE_URL}/search/photos?query=${queryType}&per_page=${PER_PAGE}&client_id=${API_KEY}`
-    );
+    const response = await fetch(proxyUrl);
+
+    if (!response.ok) {
+      // Handle errors returned specifically from your proxy function
+      const errorData = await response
+        .json()
+        .catch(() => ({ message: response.statusText })); // Try to get JSON error, fallback to status text
+      throw new Error(
+        `Proxy Error (${response.status}): ${
+          errorData.error || errorData.message || "Unknown error"
+        }`
+      );
+    }
 
     imageData = await response.json();
-    currentQuery = queryType;
+
+    if (!imageData || !imageData.results || imageData.results.length === 0) {
+      console.warn("No image results received from proxy.");
+      handleLoadingError("No images found for this query."); // Pass specific message
+      return; // Stop processing if no results
+    }
+
+    // Ensure we only try to update images that exist in the HTML
+    // const numImagesToUpdate = Math.min(images.length, imageData.results.length);
 
     images.forEach((img, index) => {
       if (imageData.results[index]) {
@@ -146,9 +177,15 @@ async function fetchImages(queryType) {
     });
 
     currentImageIndex = 0;
+    currentQuery = queryType; // Update current query state
+
     createPagination();
     updateSlider();
     startAutoSlide();
+
+    // Remove potential retry button if fetch was successful
+    const retryBtn = document.querySelector(".retry-button");
+    if (retryBtn) retryBtn.remove();
   } catch (error) {
     handleLoadingError();
   }
@@ -157,7 +194,10 @@ async function fetchImages(queryType) {
 // ========== Error Handling ==========
 function handleLoadingError() {
   stopAutoSlide();
-  images.forEach((img) => (img.src = ""));
+  images.forEach((img) => {
+    img.src = ""; // Clear potentially broken images
+    img.alt = "";
+  });
   cardTitle.textContent = "⚠️ Failed to load images";
 
   const dotsContainer = document.querySelector(".pagination-dots");
@@ -169,6 +209,7 @@ function handleLoadingError() {
     retryBtn.textContent = "Try Again";
     retryBtn.onclick = () => {
       retryBtn.remove();
+      cardTitle.textContent = "Loading..."; // Give feedback
       fetchImages(currentQuery);
     };
     document.querySelector(".card").appendChild(retryBtn);
@@ -178,5 +219,10 @@ function handleLoadingError() {
 // ========== Initialization ==========
 window.addEventListener("online", handleNetworkStatus);
 window.addEventListener("offline", handleNetworkStatus);
-handleNetworkStatus();
+
+// Initial setup
+document.addEventListener("DOMContentLoaded", () => {
+  handleNetworkStatus(); // Check network and potentially fetch initial images
+});
+
 fetchImages(SEARCH_QUERIES.female);

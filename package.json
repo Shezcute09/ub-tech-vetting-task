@@ -1,0 +1,11 @@
+{
+  "name": "UB_TechTask1",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "https://github.com/Shezcute09/ub-tech-vetting-task.git",
+  "author": "Shezcute09 <chiemezieok3@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "node-fetch": "^3.3.2"
+  }
+}
