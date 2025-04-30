@@ -1,12 +1,13 @@
-// script.js
-// ========== Configuration ==========
+// script.js (Modified)
 
-const BASE_URL = "https://api.unsplash.com";
+// ========== Configuration ==========
+// const API_KEY = "XtbC1H3JD0jUREu9cYb7tQuPAd4pc2V4r-Pt6SRUMA8"; // REMOVE THIS LINE - Key will be on the server
+const BASE_URL = "https://api.unsplash.com"; // Keep this if needed elsewhere, or remove if only used in fetch
 const SEARCH_QUERIES = {
   female: "female models",
   male: "male models",
 };
-const PER_PAGE = 3;
+const PER_PAGE = 3; // We'll pass this to our proxy
 const AUTO_SLIDE_INTERVAL = 5000;
 
 // ========== DOM Elements ==========
@@ -64,7 +65,10 @@ function handleNetworkStatus() {
   document.body.classList.toggle("offline", !isOnline);
 
   if (isOnline) {
-    if (!imageData) fetchImages(currentQuery);
+    // Only try fetching if we don't have data OR if the query changed (handle this logic if needed)
+    if (!imageData) {
+      fetchImages(currentQuery); // Fetch initial images if online and no data yet
+    }
     startAutoSlide();
   } else {
     stopAutoSlide();
@@ -95,6 +99,7 @@ function updateSlider() {
   const offset = -currentImageIndex * slideWidthPercentage;
   sliderTrack.style.transform = `translateX(${offset}%)`;
 
+  // Check if imageData and results exist and the index is valid
   if (imageData?.results?.[currentImageIndex]) {
     const current = imageData.results[currentImageIndex];
     cardTitle.textContent = (
@@ -104,11 +109,12 @@ function updateSlider() {
     ).toUpperCase();
   }
 
-  updatePagination();
+  updatePagination(); // Update dots based on the current index
 }
 
 // ========== Event Listeners ==========
 nextBtn.addEventListener("click", () => {
+  if (images.length === 0) return; // Don't slide if no images
   stopAutoSlide();
   currentImageIndex = (currentImageIndex + 1) % images.length;
   updateSlider();
@@ -116,10 +122,7 @@ nextBtn.addEventListener("click", () => {
 });
 
 prevBtn.addEventListener("click", () => {
-  // Don't slide if no images
-  if (images.length === 0) return;
-  stopAutoSlide();
-
+  if (images.length === 0) return; // Don't slide if no images
   stopAutoSlide();
   currentImageIndex = (currentImageIndex - 1 + images.length) % images.length;
   updateSlider();
@@ -133,7 +136,7 @@ document
   .querySelector(".image-slider")
   .addEventListener("mouseleave", startAutoSlide);
 
-// ========== Image Loading ==========
+// ========== Image Loading (MODIFIED) ==========
 async function fetchImages(queryType) {
   if (!navigator.onLine) return;
 
@@ -144,6 +147,7 @@ async function fetchImages(queryType) {
   // Note: Using encodeURIComponent for the query is good practice
 
   try {
+    // Fetch from your proxy endpoint INSTEAD of api.unsplash.com
     const response = await fetch(proxyUrl);
 
     if (!response.ok) {
@@ -158,8 +162,9 @@ async function fetchImages(queryType) {
       );
     }
 
-    imageData = await response.json();
+    imageData = await response.json(); // This is the data forwarded by your proxy
 
+    // Check if results exist and have the expected length
     if (!imageData || !imageData.results || imageData.results.length === 0) {
       console.warn("No image results received from proxy.");
       handleLoadingError("No images found for this query."); // Pass specific message
@@ -167,19 +172,23 @@ async function fetchImages(queryType) {
     }
 
     // Ensure we only try to update images that exist in the HTML
-    // const numImagesToUpdate = Math.min(images.length, imageData.results.length);
+    const numImagesToUpdate = Math.min(images.length, imageData.results.length);
 
     images.forEach((img, index) => {
-      if (imageData.results[index]) {
+      if (index < numImagesToUpdate) {
         img.src = imageData.results[index].urls.regular;
         img.alt = imageData.results[index].alt_description || queryType;
+      } else {
+        // Optional: Clear or hide unused image elements if API returns fewer than expected
+        img.src = "";
+        img.alt = "";
       }
     });
 
     currentImageIndex = 0;
     currentQuery = queryType; // Update current query state
 
-    createPagination();
+    createPagination(); // Recreate pagination based on the actual number of loaded images (or fixed number)
     updateSlider();
     startAutoSlide();
 
@@ -187,18 +196,19 @@ async function fetchImages(queryType) {
     const retryBtn = document.querySelector(".retry-button");
     if (retryBtn) retryBtn.remove();
   } catch (error) {
-    handleLoadingError();
+    console.error("Error in fetchImages:", error);
+    handleLoadingError(error.message); // Pass error message for display
   }
 }
 
 // ========== Error Handling ==========
-function handleLoadingError() {
+function handleLoadingError(errorMessage = "Failed to load images") {
   stopAutoSlide();
   images.forEach((img) => {
     img.src = ""; // Clear potentially broken images
     img.alt = "";
   });
-  cardTitle.textContent = "⚠️ Failed to load images";
+  cardTitle.textContent = `⚠️ ${errorMessage}`; // Show the specific error
 
   const dotsContainer = document.querySelector(".pagination-dots");
   if (dotsContainer) dotsContainer.remove();
@@ -208,10 +218,11 @@ function handleLoadingError() {
     retryBtn.className = "retry-button";
     retryBtn.textContent = "Try Again";
     retryBtn.onclick = () => {
-      retryBtn.remove();
+      retryBtn.remove(); // Remove button on click
       cardTitle.textContent = "Loading..."; // Give feedback
-      fetchImages(currentQuery);
+      fetchImages(currentQuery); // Retry with the last used query
     };
+    // Append to .card or a more specific error message container
     document.querySelector(".card").appendChild(retryBtn);
   }
 }
@@ -219,10 +230,8 @@ function handleLoadingError() {
 // ========== Initialization ==========
 window.addEventListener("online", handleNetworkStatus);
 window.addEventListener("offline", handleNetworkStatus);
-
 // Initial setup
 document.addEventListener("DOMContentLoaded", () => {
   handleNetworkStatus(); // Check network and potentially fetch initial images
 });
-
-fetchImages(SEARCH_QUERIES.female);
+// Fetch initial images on load
