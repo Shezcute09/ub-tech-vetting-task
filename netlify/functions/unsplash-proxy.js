@@ -1,16 +1,11 @@
-// netlify/functions/unsplash-proxy.js
-
 // Use node-fetch for making HTTP requests in a Node.js environment
-// If your serverless provider runtime has built-in fetch (like newer Node versions or Deno/Cloudflare Workers),
-// you might not need to install/require this. Check your provider's docs.
-// If needed: run `npm install node-fetch` in your project root.
+
 const fetch = require("node-fetch");
 
 // The Unsplash base URL
 const UNSPLASH_BASE_URL = "https://api.unsplash.com";
 
-// Access your secret API key from environment variables
-// IMPORTANT: Set this in your Netlify Site settings > Build & deploy > Environment variables
+// Access The  secret API key from environment variables
 const API_KEY = process.env.UNSPLASH_ACCESS_KEY;
 
 exports.handler = async function (event, context) {
@@ -28,23 +23,21 @@ exports.handler = async function (event, context) {
 
   // Get query parameters passed from the client-side fetch
   const queryParams = event.queryStringParameters;
-  const query = queryParams.query || "models"; // Default query if none provided
-  const perPage = queryParams.per_page || 3; // Default per_page if none provided
+  const query = queryParams.query || "models";
+  const perPage = queryParams.per_page || 3;
 
   // Construct the target URL for the actual Unsplash API
   const targetURL = `${UNSPLASH_BASE_URL}/search/photos?query=${encodeURIComponent(
     query
   )}&per_page=${perPage}&client_id=${API_KEY}`;
 
-  console.log(`Proxying request to: ${targetURL}`); // Log for debugging (optional)
+  // console.log(`Proxying request to: ${targetURL}`);
 
   try {
     const response = await fetch(targetURL, {
       method: "GET",
       headers: {
-        // Unsplash API often requires this version header
         "Accept-Version": "v1",
-        // Add any other headers Unsplash might require
       },
     });
 
@@ -69,11 +62,7 @@ exports.handler = async function (event, context) {
     // Get the JSON data from Unsplash
     const data = await response.json();
 
-    // --- Optional Security Enhancement: Filter Data ---
-    // You might only want to return specific fields to the client,
-    // reducing the amount of data transferred and potentially hiding
-    // sensitive info Unsplash might include in the future.
-
+    // --- Security Enhancement: Filter Data ---
     const filteredResults = data.results.map((img) => ({
       id: img.id,
       urls: { regular: img.urls.regular },
@@ -81,20 +70,18 @@ exports.handler = async function (event, context) {
       description: img.description,
     }));
     const responseBody = JSON.stringify({ results: filteredResults });
-    // --- End Optional Enhancement ---
+    // --- End Enhancement ---
 
     // Return the successful response data (as received from Unsplash)
-    // back to your client-side JavaScript
+    // back to client-side JavaScript
     return {
       statusCode: 200,
       headers: {
         "Content-Type": "application/json",
-        // IMPORTANT for security: Restrict who can call this function
-        // Adjust '*' to your specific domain in production
         "Access-Control-Allow-Origin": "*",
         "Access-Control-Allow-Headers": "Content-Type",
       },
-      // If using the optional filtering:
+
       body: responseBody,
     };
   } catch (error) {

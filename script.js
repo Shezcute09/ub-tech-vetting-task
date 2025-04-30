@@ -1,8 +1,8 @@
 // script.js (Modified)
 
 // ========== Configuration ==========
-// const API_KEY = "XtbC1H3JD0jUREu9cYb7tQuPAd4pc2V4r-Pt6SRUMA8"; // REMOVE THIS LINE - Key will be on the server
-const BASE_URL = "https://api.unsplash.com"; // Keep this if needed elsewhere, or remove if only used in fetch
+
+const BASE_URL = "https://api.unsplash.com";
 const SEARCH_QUERIES = {
   female: "female models",
   male: "male models",
@@ -144,7 +144,6 @@ async function fetchImages(queryType) {
   const proxyUrl = `/.netlify/functions/unsplash-proxy?query=${encodeURIComponent(
     queryType
   )}&per_page=${PER_PAGE}`;
-  // Note: Using encodeURIComponent for the query is good practice
 
   try {
     // Fetch from your proxy endpoint INSTEAD of api.unsplash.com
@@ -162,7 +161,7 @@ async function fetchImages(queryType) {
       );
     }
 
-    imageData = await response.json(); // This is the data forwarded by your proxy
+    imageData = await response.json(); //  data forwarded by my proxy
 
     // Check if results exist and have the expected length
     if (!imageData || !imageData.results || imageData.results.length === 0) {
@@ -171,7 +170,7 @@ async function fetchImages(queryType) {
       return; // Stop processing if no results
     }
 
-    // Ensure we only try to update images that exist in the HTML
+    // Ensuring that I only try to update images that exist in the HTML
     const numImagesToUpdate = Math.min(images.length, imageData.results.length);
 
     images.forEach((img, index) => {
@@ -179,7 +178,7 @@ async function fetchImages(queryType) {
         img.src = imageData.results[index].urls.regular;
         img.alt = imageData.results[index].alt_description || queryType;
       } else {
-        // Optional: Clear or hide unused image elements if API returns fewer than expected
+        // Clear or hide unused image elements if API returns fewer than expected
         img.src = "";
         img.alt = "";
       }
@@ -234,4 +233,3 @@ window.addEventListener("offline", handleNetworkStatus);
 document.addEventListener("DOMContentLoaded", () => {
   handleNetworkStatus(); // Check network and potentially fetch initial images
 });
-// Fetch initial images on load
